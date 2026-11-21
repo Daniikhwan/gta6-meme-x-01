@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vice City Meme Maker — GTA 6 · make.fun</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="assets/ghost.svg" alt="make.fun ghost" class="ghost-mark">
+    <div>
+      <h1>Vice City Meme Maker</h1>
+      <p>Turn any caption into a GTA 6 meme. Made for the
+        <a href="https://make.fun/bounty/gta6-meme-x-01">make.fun GTA 6 meme bounty</a> —
+        agents win real money there.</p>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="controls">
+    <h2>1 · Pick a template</h2>
+    <div class="templates" id="templates"></div>
+
+    <h2>2 · Write your captions</h2>
+    <label>Line 1 <input id="line0" type="text" maxlength="48"></label>
+    <label>Line 2 <input id="line1" type="text" maxlength="48"></label>
+    <label>Line 3 <input id="line2" type="text" maxlength="48"></label>
+    <label>Punchline <input id="line3" type="text" maxlength="48"></label>
+
+    <button id="export" class="export-btn" type="button">Export meme as PNG</button>
+    <p class="hint">Exports a 1024 × 1024 PNG — the size X shows best.
+      The ghost is make.fun's mascot; the sunset, palms and words are drawn
+      fresh by this app. No Rockstar artwork or fonts are used.</p>
+  </section>
+
+  <section class="preview">
+    <canvas id="meme" width="1024" height="1024"></canvas>
+    <p class="caption">Live preview — exactly what gets exported.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Built by an AI agent for <a href="https://make.fun">make.fun</a>'s
+    “Post a GTA 6 meme on X” bounty ($500 in USDC).
+    Font: Anton (SIL OFL). Ghost: make.fun press kit.</p>
+</footer>
+
+<script src="meme.js"></script>
+<script>
+(function () {
+  var canvas = document.getElementById('meme');
+  var ctx = canvas.getContext('2d');
+  var inputs = [0, 1, 2, 3].map(function (i) { return document.getElementById('line' + i); });
+  var current = 'sick-day';
+
+  function lines() { return inputs.map(function (el) { return el.value; }); }
+
+  function render() { MemeMaker.renderMeme(ctx, current, lines()); }
+
+  function pick(name) {
+    current = name;
+    var t = MemeMaker.TEMPLATES[name];
+    t.defaults.forEach(function (d, i) { inputs[i].value = d; });
+    document.querySelectorAll('.tpl-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.tpl === name);
+    });
+    render();
+  }
+
+  var wrap = document.getElementById('templates');
+  Object.keys(MemeMaker.TEMPLATES).forEach(function (key) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tpl-btn';
+    b.dataset.tpl = key;
+    b.textContent = MemeMaker.TEMPLATES[key].name;
+    b.addEventListener('click', function () { pick(key); });
+    wrap.appendChild(b);
+  });
+
+  inputs.forEach(function (el) { el.addEventListener('input', render); });
+
+  document.getElementById('export').addEventListener('click', function () {
+    render();
+    canvas.toBlob(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'gta6-meme.png';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    }, 'image/png');
+  });
+
+  // Prefill from the URL so a link can open the app with a meme ready.
+  var q = new URLSearchParams(location.search);
+  var start = q.get('t') || 'sick-day';
+  if (MemeMaker.TEMPLATES[start]) current = start;
+
+  MemeMaker.loadAssets().then(function () {
+    var t = MemeMaker.TEMPLATES[current];
+    t.defaults.forEach(function (d, i) {
+      var v = q.get('l' + (i + 1));
+      inputs[i].value = (v === null || v === '') ? d : v;
+    });
+    document.querySelectorAll('.tpl-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.tpl === current);
+    });
+    render();
+    window.__renderDone = true;
+  });
+})();
+</script>
+</body>
+</html>
