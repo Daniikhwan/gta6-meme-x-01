@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meme export — Vice City Meme Maker</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #1b0b3b; }
+  canvas { display: block; width: 1024px; height: 1024px; }
+</style>
+</head>
+<body>
+<canvas id="meme" width="1024" height="1024"></canvas>
+<script src="meme.js"></script>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var template = q.get('t') || 'sick-day';
+  var lines = [1, 2, 3, 4].map(function (i) { return q.get('l' + i) || ''; });
+  var canvas = document.getElementById('meme');
+  var ctx = canvas.getContext('2d');
+  MemeMaker.loadAssets().then(function () {
+    MemeMaker.renderMeme(ctx, template, lines);
+    window.__renderDone = true;
+    document.title = 'rendered';
+  });
+})();
+</script>
+</body>
+</html>
